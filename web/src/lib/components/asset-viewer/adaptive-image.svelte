@@ -3,6 +3,7 @@
   import { thumbhash } from '$lib/actions/thumbhash';
   import { zoomImageAction } from '$lib/actions/zoom-image';
   import BrokenAsset from '$lib/components/assets/broken-asset.svelte';
+  import Letterboxes from '$lib/components/asset-viewer/letterboxes.svelte';
   import { SlideshowLook, SlideshowState } from '$lib/stores/slideshow.store';
   import { photoZoomState, photoZoomTransform, resetZoomState } from '$lib/stores/zoom-image.store';
   import { AdaptiveImageLoader } from '$lib/utils/adaptive-image-loader.svelte';
@@ -25,6 +26,7 @@
     };
     slideshowState: SlideshowState;
     slideshowLook: SlideshowLook;
+    transitionName?: string | null | undefined;
     onImageReady?: () => void;
     onError?: () => void;
     imgElement?: HTMLImageElement;
@@ -42,6 +44,7 @@
     container,
     slideshowState,
     slideshowLook,
+    transitionName,
     onImageReady,
     onError,
     overlays,
@@ -97,6 +100,12 @@
     };
   });
 
+  const blurredSlideshow = $derived(
+    slideshowState !== SlideshowState.None &&
+      slideshowLook === SlideshowLook.BlurredBackground &&
+      !!asset.thumbhash,
+  );
+
   const loadState = $derived(adaptiveImageLoader.adaptiveLoaderState);
   const imageAltText = $derived(loadState.previewUrl ? $getAltText(toTimelineAsset(asset)) : '');
   const thumbnailUrl = $derived(loadState.thumbnailUrl);
@@ -121,14 +130,36 @@
   });
 </script>
 
-<div
-  class="relative h-full w-full"
-  style:left={renderDimensions.left}
-  style:top={renderDimensions.top}
-  style:width={renderDimensions.width}
-  style:height={renderDimensions.height}
-  bind:this={imgContainerElement}
->
+<div class="relative h-full w-full">
+  <!-- Blurred slideshow background (full viewport) -->
+  {#if blurredSlideshow}
+    <canvas
+      use:thumbhash={{ base64ThumbHash: asset.thumbhash! }}
+      class="-z-1 absolute top-0 left-0 start-0 h-dvh w-dvw"
+    ></canvas>
+  {/if}
+
+  <!-- Letterbox regions (empty space around image) -->
+  <Letterboxes
+    {transitionName}
+    {slideshowState}
+    {slideshowLook}
+    hasThumbhash={!!asset.thumbhash}
+    {scaledDimensions}
+    {container}
+  />
+
+  <!-- Main image box with transition -->
+  <div
+    style:view-transition-name={transitionName}
+    data-transition-name={transitionName}
+    class="absolute"
+    style:left={renderDimensions.left}
+    style:top={renderDimensions.top}
+    style:width={renderDimensions.width}
+    style:height={renderDimensions.height}
+    bind:this={imgContainerElement}
+  >
   {#if asset.thumbhash}
     <!-- Thumbhash / spinner layer  -->
     <div style:transform-origin="0px 0px" style:transform={$photoZoomTransform} class="h-full w-full absolute">
@@ -234,6 +265,7 @@
       <img alt="" class="absolute h-full w-full hidden" draggable="false" />
     </div>
   {/if}
+  </div>
 </div>
 
 <style>
