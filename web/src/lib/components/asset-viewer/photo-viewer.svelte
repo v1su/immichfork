@@ -3,6 +3,7 @@
   import AdaptiveImage from '$lib/components/asset-viewer/adaptive-image.svelte';
   import FaceEditor from '$lib/components/asset-viewer/face-editor/face-editor.svelte';
   import OcrBoundingBox from '$lib/components/asset-viewer/ocr-bounding-box.svelte';
+  import SwipeFeedback from '$lib/components/asset-viewer/swipe-feedback.svelte';
   import { castManager } from '$lib/managers/cast-manager.svelte';
   import { photoViewerImgElement } from '$lib/stores/assets-store.svelte';
   import { isFaceEditMode } from '$lib/stores/face-edit.svelte';
@@ -17,7 +18,7 @@
   import { getBoundingBox } from '$lib/utils/people-utils';
   import { type SharedLinkResponseDto } from '@immich/sdk';
   import { toastManager } from '@immich/ui';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
   import type { AssetCursor } from './asset-viewer.svelte';
 
@@ -25,7 +26,9 @@
     cursor: AssetCursor;
     element?: HTMLDivElement;
     sharedLink?: SharedLinkResponseDto;
+    transitionName?: string;
     onReady?: () => void;
+    onSwipe?: (direction: 'left' | 'right') => void;
     copyImage?: () => Promise<void>;
     zoomToggle?: () => void;
   }
@@ -34,7 +37,9 @@
     cursor,
     element = $bindable(),
     sharedLink,
+    transitionName,
     onReady,
+    onSwipe,
     copyImage = $bindable(),
     zoomToggle = $bindable(),
   }: Props = $props();
@@ -118,6 +123,15 @@
     width: containerWidth,
     height: containerHeight,
   });
+  let imgContainerElement = $state<HTMLElement | undefined>();
+  let swipeFeedbackReset = $state<(() => void) | undefined>();
+
+  $effect(() => {
+    // Reset swipe feedback when asset changes
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    asset.id;
+    untrack(() => swipeFeedbackReset?.());
+  });
 </script>
 
 <svelte:document
@@ -129,16 +143,20 @@
   ]}
 />
 
-<div
-  bind:this={element}
+<SwipeFeedback
+  bind:element
   class="relative h-full w-full select-none"
   bind:clientWidth={containerWidth}
   bind:clientHeight={containerHeight}
+  disabled={isOcrActive || $photoZoomState.currentZoom > 1}
+  {onSwipe}
+  bind:reset={swipeFeedbackReset}
 >
   <AdaptiveImage
     {asset}
     {sharedLink}
     {container}
+    {transitionName}
     zoomDisabled={isOcrActive}
     imageClass={$slideshowState === SlideshowState.None ? 'object-contain' : slideshowLookCssMapping[$slideshowLook]}
     slideshowState={$slideshowState}
@@ -146,6 +164,7 @@
     onImageReady={() => onReady?.()}
     onError={() => onReady?.()}
     bind:imgElement={$photoViewerImgElement}
+    bind:imgContainerElement
   >
     {#snippet overlays()}
       <!-- eslint-disable-next-line svelte/require-each-key -->
@@ -165,4 +184,32 @@
   {#if isFaceEditMode.value}
     <FaceEditor htmlElement={$photoViewerImgElement} {containerWidth} {containerHeight} assetId={asset.id} />
   {/if}
-</div>
+
+  {#snippet leftPreview()}
+    {#if cursor.previousAsset}
+      <AdaptiveImage
+        asset={cursor.previousAsset}
+        {sharedLink}
+        {container}
+        zoomDisabled={true}
+        imageClass="object-contain"
+        slideshowState={$slideshowState}
+        slideshowLook={$slideshowLook}
+      />
+    {/if}
+  {/snippet}
+
+  {#snippet rightPreview()}
+    {#if cursor.nextAsset}
+      <AdaptiveImage
+        asset={cursor.nextAsset}
+        {sharedLink}
+        {container}
+        zoomDisabled={true}
+        imageClass="object-contain"
+        slideshowState={$slideshowState}
+        slideshowLook={$slideshowLook}
+      />
+    {/if}
+  {/snippet}
+</SwipeFeedback>
