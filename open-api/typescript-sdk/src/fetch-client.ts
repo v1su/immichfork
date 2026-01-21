@@ -5534,6 +5534,8 @@ export enum Permission {
     TimelineRead = "timeline.read",
     TimelineDownload = "timeline.download",
     Maintenance = "maintenance",
+    MapGeocode = "map.geocode",
+    MapRead = "map.read",
     MemoryCreate = "memory.create",
     MemoryRead = "memory.read",
     MemoryUpdate = "memory.update",
