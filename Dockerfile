@@ -1,6 +1,8 @@
 FROM ghcr.io/immich-app/immich-server:release
 
-ENV IMMICH_PORT=3001
-EXPOSE 3001
+WORKDIR /usr/src/app
 
-CMD ["node", "dist/main"]
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
