@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: immich-server
+    env: docker
+    dockerfilePath: ./Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: DB_HOST
+        value: "<RENDER_POSTGRES_HOST>"
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_USERNAME
+        value: "<POSTGRES_USER>"
+      - key: DB_PASSWORD
+        value: "<POSTGRES_PASSWORD>"
+      - key: DB_DATABASE_NAME
+        value: "<POSTGRES_DB>"
+      - key: REDIS_HOST
+        value: "<REDIS_HOST>"
+      - key: REDIS_PORT
+        value: "6379"
+      - key: IMMICH_LOG_LEVEL
+        value: "log"
+      - key: IMMICH_MACHINE_LEARNING_ENABLED
+        value: "false"
+      - key: IMMICH_MEDIA_LOCATION
+        value: "/usr/src/app/upload"
+    disk:
+      - name: immich-upload
+        mountPath: /usr/src/app/upload
+        sizeGb: 10
