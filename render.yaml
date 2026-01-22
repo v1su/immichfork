@@ -27,6 +27,6 @@ services:
       - key: IMMICH_MEDIA_LOCATION
         value: "/usr/src/app/upload"
     disk:
-      - name: immich-upload
+        name: immich-upload
         mountPath: /usr/src/app/upload
         sizeGb: 10
