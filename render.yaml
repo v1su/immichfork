@@ -6,6 +6,7 @@ services:
     dockerfilePath: ./Dockerfile
     buildCommand: ""
     startCommand: ""
+
     envVars:
       - key: DB_HOST
         value: "<RENDER_POSTGRES_HOST>"
@@ -17,16 +18,19 @@ services:
         value: "<POSTGRES_PASSWORD>"
       - key: DB_DATABASE_NAME
         value: "<POSTGRES_DB>"
+
       - key: REDIS_HOST
         value: "<REDIS_HOST>"
       - key: REDIS_PORT
         value: "6379"
+
       - key: IMMICH_LOG_LEVEL
         value: "log"
       - key: IMMICH_MACHINE_LEARNING_ENABLED
         value: "false"
       - key: IMMICH_MEDIA_LOCATION
         value: "/usr/src/app/upload"
-    disk:
-        name: immich-upload
-        mountPath: /usr/src/app/upload
+      - key: IMMICH_PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: "production"
