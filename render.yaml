@@ -29,4 +29,3 @@ services:
     disk:
         name: immich-upload
         mountPath: /usr/src/app/upload
-        sizeGb: 10
